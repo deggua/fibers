@@ -10,7 +10,7 @@ typedef void* Fiber_t;
 void FiberYield(Fiber_t fiber);
 
 // Creates a new fiber given an entry point and stack size which can be yielded to in order to begin execution
-Fiber_t FiberCreate(void (*entryPoint)(void *arg), size_t stackSize);
+Fiber_t FiberCreate(void (*entryPoint)(void*), size_t stackSize);
 
 // Deletes a fiber, freeing its allocated memory
 void FiberDelete(Fiber_t fiber);
