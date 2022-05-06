@@ -1,24 +1,25 @@
 #ifndef FIBERS_H
 #define FIBERS_H
 
-#include <stdint.h>
 #include <stddef.h>
 
-typedef void* Fiber_t;
+typedef struct Fiber Fiber;
 
 // Yields current execution to another fiber
-void FiberYield(Fiber_t fiber);
+// fromFiber can be NULL, toFiber cannot be NULL
+void Fiber_Yield(Fiber* fromFiber, Fiber* toFiber);
 
 // Creates a new fiber given an entry point and stack size which can be yielded to in order to begin execution
-Fiber_t FiberCreate(void (*entryPoint)(void*), size_t stackSize);
+// Exit func is the function to return to from when the fiber returns, and is responsible for clean up
+Fiber* Fiber_Create(void (*entryPoint)(void*), size_t stackSize, void (*exitFunc)(void));
 
-// Deletes a fiber, freeing its allocated memory
-void FiberDelete(Fiber_t fiber);
+// Deletes a fiber, freeing its allocated memory and storage
+void Fiber_Delete(Fiber* fiber);
 
 // Binds a pointer to the current fiber, returns the pointer
-void* FiberStorageBind(void** var);
+void* Fiber_Storage_Bind(Fiber* fiber, void* var, size_t size);
 
 // Releases a pointers binding, making it non-local to the fiber
-void FiberStorageRelease(void** var);
+void Fiber_Storage_Release(Fiber* fiber, void* var);
 
 #endif

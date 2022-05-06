@@ -1,60 +1,55 @@
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "fibers.h"
 
-Fiber_t fiberA, fiberB;
-int *exP, *exQ;
+Fiber *fiberA, *fiberB;
+int    var = 0;
 
-void FiberRoutineA(void* arg) {
-    exP = malloc(sizeof(int));
-    exQ = malloc(sizeof(int));
+void FiberRoutineA(void* arg)
+{
+    Fiber_Storage_Bind(fiberA, &var, sizeof(var));
+    var = 0;
 
-    FiberStorageBind(&exP);
-    FiberStorageBind(&exQ);
-
-    *exP = 0;
-    *exQ = 0;
-
-    while (true) {
+    while (var < 5) {
         printf("FiberRoutineA\n");
-        printf("P = %d\n", *exP);
-        printf("Q = %d\n\n", *exQ);
+        printf("var = %d\n\n", var++);
 
-        *exP += 10;
-        *exQ += 1;
+        if (var == 2) {
+            Fiber_Storage_Release(fiberA, &var);
+        }
 
-        FiberYield(fiberB);
+        Fiber_Yield(fiberA, fiberB);
     }
 }
 
-void FiberRoutineB(void* arg) {
-    exP = malloc(sizeof(int));
-    exQ = malloc(sizeof(int));
-
-    FiberStorageBind(&exP);
-    FiberStorageBind(&exQ);
-
-    *exP = 0;
-    *exQ = 0;
+void FiberRoutineB(void* arg)
+{
+    Fiber_Storage_Bind(fiberB, &var, sizeof(var));
+    var = -10;
 
     while (true) {
         printf("FiberRoutineB\n");
-        printf("P = %d\n", *exP);
-        printf("Q = %d\n\n", *exQ);
-        
-        *exP += 1000;
-        *exQ += 100;
+        printf("var = %d\n\n", var);
+        var += 2;
 
-        FiberYield(fiberA);
+        Fiber_Yield(fiberB, fiberA);
     }
 }
 
-int main(int argc, char** argv) {
-    fiberA = FiberCreate(FiberRoutineA, 16*1024);
-    fiberB = FiberCreate(FiberRoutineB, 16*1024);
+void FiberExit(void)
+{
+    exit(0);
+}
 
-    FiberYield(fiberA);
+#define KiB 1024
+
+int main(int argc, char** argv)
+{
+    fiberA = Fiber_Create(FiberRoutineA, 4 * KiB, FiberExit);
+    fiberB = Fiber_Create(FiberRoutineB, 4 * KiB, FiberExit);
+
+    Fiber_Yield(NULL, fiberA);
     return 0;
 }
